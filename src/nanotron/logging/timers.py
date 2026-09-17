@@ -208,11 +208,17 @@ class Timers:
     def enable(cls) -> None:
         """Enable all timing operations."""
         cls._enabled = True
+        if cls._instance is not None:
+            for timer in cls._instance._timers.values():
+                timer.enabled = True
 
     @classmethod
     def disable(cls) -> None:
         """Disable all timing operations."""
         cls._enabled = False
+        if cls._instance is not None:
+            for timer in cls._instance._timers.values():
+                timer.enabled = False
 
     @classmethod
     def is_enabled(cls) -> bool:
@@ -224,7 +230,7 @@ class Timers:
         name: str,
         timer_type: Union[TimerType, str] = TimerType.CUDA,
         cuda_sync: bool = False,
-        enabled: bool = bool(int(os.environ.get("ENABLE_TIMERS", "0"))),
+        enabled: Optional[bool] = None,
     ) -> TimerRecord:
         """Get or create a timer with the given name.
 
@@ -241,13 +247,16 @@ class Timers:
                         (or 'cuda'/'cpu' strings)
             cuda_sync: Whether to perform torch.cuda.synchronize() for more accurate CUDA timing.
                        Default is False to avoid unnecessary synchronization overhead.
-            enabled: Override default enabled setting from environment variable
+            enabled: Override the current global timer enabled state for this timer.
 
         Raises:
             ValueError: If a timer with the same name already exists with different settings
         """
         if isinstance(timer_type, str):
             timer_type = TimerType(timer_type)
+
+        if enabled is None:
+            enabled = self._enabled
 
         if callable(name):
             # Being used as a decorator with specified or default settings
