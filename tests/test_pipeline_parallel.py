@@ -55,6 +55,26 @@ def _test_build_and_set_rank(parallel_context: ParallelContext):
     parallel_context.destroy()
 
 
+def test_1f1b_microbatch_error_mentions_batch_accumulation_per_replica():
+    class ProcessGroupStub:
+        def size(self):
+            return 8
+
+    engine = OneForwardOneBackwardPipelineEngine()
+
+    with pytest.raises(
+        AssertionError,
+        match=r"batch_accumulation_per_replica.*PP_SIZE-1=7.*got 1",
+    ):
+        engine.train_batch_iter(
+            model=nn.Identity(),
+            pg=ProcessGroupStub(),
+            batch=(),
+            nb_microbatches=1,
+            grad_accumulator=None,
+        )
+
+
 @pytest.mark.skipif(available_gpus() < 1, reason="Testing test_init_on_device_and_dtype requires at least 1 gpus")
 def test_init_on_device_and_dtype():
     device = torch.device(type="cuda", index=0)
