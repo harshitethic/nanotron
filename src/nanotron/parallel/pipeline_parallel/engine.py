@@ -249,9 +249,12 @@ class OneForwardOneBackwardPipelineEngine(PipelineEngine):
     ) -> Iterable[Dict[str, Union[torch.Tensor, TensorPointer]]]:
         """Check https://arxiv.org/abs/2104.04473 for diagrams for the pipeline engine"""
         self.nb_microbatches = nb_microbatches
-        assert (
-            self.nb_microbatches >= pg.size() - 1
-        ), f"Number of microbatches ({self.nb_microbatches}) must be at least PP_SIZE-1={pg.size() - 1} when using the OneForwardOneBackwardPipelineEngine"
+        assert self.nb_microbatches >= pg.size() - 1, (
+            "`batch_accumulation_per_replica` (the number of microbatches) "
+            f"must be at least PP_SIZE-1={pg.size() - 1} when using "
+            "OneForwardOneBackwardPipelineEngine; "
+            f"got {self.nb_microbatches}"
+        )
 
         state = PipelineTrainBatchState()
 
