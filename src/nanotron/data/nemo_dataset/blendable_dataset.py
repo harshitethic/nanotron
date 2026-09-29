@@ -180,15 +180,12 @@ class BlendableDataset(torch.utils.data.Dataset):
         """Get current consumption statistics for all datasets.
 
         Returns:
-            dict: Dictionary containing samples and tokens consumed per dataset
+            dict: Dictionary containing tokens consumed per dataset path
         """
-        stats = {}
-        for dataset_idx, dataset in enumerate(self.datasets):
-            assert (
-                "s3" in dataset.folder_path
-            ), "Only S3 paths are supported for consumption stats"  # TODO: remove this
-            stats[dataset.folder_path] = {"tokens": self.consumed_tokens[dataset_idx]}
-        return stats
+        return {
+            dataset.folder_path: {"tokens": self.consumed_tokens[dataset_idx]}
+            for dataset_idx, dataset in enumerate(self.datasets)
+        }
 
 
 class MemoryEfficientBlendableDataset(torch.utils.data.Dataset):
