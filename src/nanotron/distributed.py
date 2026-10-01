@@ -24,6 +24,10 @@ def new_group(  # pylint: disable=function-redefined
     if len(ranks) == 0:
         raise ValueError("Cannot create a group with not ranks inside it")
 
+    # ParallelContext commonly builds groups from NumPy arrays. Convert NumPy
+    # integer scalars (and other integer-like ranks) to builtin ints before
+    # handing them to PyTorch so distributed metadata remains JSON serializable.
+    ranks = [int(rank) for rank in ranks]
     return dist.new_group(ranks=ranks, timeout=timeout, backend=backend, pg_options=pg_options)
 
 
