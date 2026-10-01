@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
 import torch.distributed as dist
+import nanotron.distributed as nanotron_dist
 from helpers.utils import (
     available_gpus,
     get_all_3d_configurations,
@@ -9,6 +10,21 @@ from helpers.utils import (
 )
 from nanotron.parallel import ParallelContext
 from torch.distributed import ProcessGroup
+
+
+def test_new_group_normalizes_numpy_ranks(monkeypatch: pytest.MonkeyPatch):
+    captured = {}
+
+    def fake_new_group(*, ranks, timeout, backend, pg_options):
+        captured["ranks"] = ranks
+        return object()
+
+    monkeypatch.setattr(nanotron_dist.dist, "new_group", fake_new_group)
+
+    nanotron_dist.new_group(np.asarray([0, 1], dtype=np.int64))
+
+    assert captured["ranks"] == [0, 1]
+    assert all(type(rank) is int for rank in captured["ranks"])
 
 
 def _test_init_parallel_context(parallel_context: ParallelContext):
